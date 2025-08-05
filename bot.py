@@ -85,7 +85,7 @@ async def on_vacancy_selected(callback: types.CallbackQuery, state: FSMContext):
     if info is None:
         await callback.answer("К сожалению, вакансия уже недоступна", show_alert=True)
         keyboard = await build_vacancies_keyboard()
-        await callback.message.edit_reply_markup(keyboard)
+        await callback.message.edit_reply_markup(reply_markup=keyboard)
         return
 
     # Acknowledge button press (no popup needed)
@@ -93,7 +93,7 @@ async def on_vacancy_selected(callback: types.CallbackQuery, state: FSMContext):
 
     # Refresh the menu in the original message so the button disappears for everyone
     keyboard = await build_vacancies_keyboard()
-    await callback.message.edit_reply_markup(keyboard)
+    await callback.message.edit_reply_markup(reply_markup=keyboard)
 
     # 2. Greeting text
     await callback.message.answer(

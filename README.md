@@ -84,4 +84,22 @@ docker run -e BOT_TOKEN="YOUR_TELEGRAM_BOT_TOKEN" \
 ```
 
 The command mounts your local `voices/` directory and the SQLite database file so that both persist across container restarts. Replace `YOUR_TELEGRAM_BOT_TOKEN` with your actual token before running.
+
+### Run in background (detached)
+
+Add the `-d` flag and optionally a container name:
+
+```bash
+docker run -d --name requirement-bot \
+           -e BOT_TOKEN="YOUR_TELEGRAM_BOT_TOKEN" \
+           -v "$PWD/voices:/app/voices" \
+           -v "$PWD/vacancies.db:/app/vacancies.db" \
+           requirement-bot
+```
+
+To follow the logs later:
+
+```bash
+docker logs -f requirement-bot
+```
  
