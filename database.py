@@ -64,4 +64,12 @@ async def get_voice_path(vac_id: int):
             "SELECT voice_path FROM vacancies WHERE id = ?", (vac_id,)
         )
         row = await cursor.fetchone()
-        return row[0] if row else None 
+        return row[0] if row else None
+
+
+async def reset_vacancies():
+    """Reset all vacancies to available (taken = 0)."""
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("UPDATE vacancies SET taken = 0")
+        await db.commit()
+ 

@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 from aiogram import Bot, Dispatcher, F, types
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
@@ -12,6 +12,7 @@ import database as db
 
 # ---------------------------------------------------------------------------
 # Configuration
+ADMIN_IDS = {430378049, 732877680}  # Telegram user IDs allowed to use admin commands
 # ---------------------------------------------------------------------------
 # You can export BOT_TOKEN=... or replace the placeholder below.
 TOKEN = os.getenv("BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN")
@@ -125,6 +126,17 @@ async def on_resume_received(message: types.Message, state: FSMContext):
     )
     await state.clear()
 
+
+@dp.message(Command("reset"))
+async def cmd_reset(message: types.Message):
+    # Allow only predefined admin IDs
+    if message.from_user.id not in ADMIN_IDS:
+        await message.answer("У вас нет прав для этой команды.")
+        return
+    """Admin command to reset vacancy availability."""
+    await db.reset_vacancies()
+    keyboard = await build_vacancies_keyboard()
+    await message.answer("Все вакансии сброшены и снова доступны", reply_markup=keyboard)
 
 # ---------------------------------------------------------------------------
 # Startup routine
