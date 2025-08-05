@@ -64,4 +64,24 @@ recquierement_bot/
 └─ voices/         # Put your voice files here (not committed)
 ```
 
-Enjoy! 
+Enjoy!
+
+## Docker
+
+### Build the image
+
+```bash
+docker build -t requirement-bot .
+```
+
+### Run the container
+
+```bash
+docker run -e BOT_TOKEN="YOUR_TELEGRAM_BOT_TOKEN" \
+           -v "$PWD/voices:/app/voices" \
+           -v "$PWD/vacancies.db:/app/vacancies.db" \
+           requirement-bot
+```
+
+The command mounts your local `voices/` directory and the SQLite database file so that both persist across container restarts. Replace `YOUR_TELEGRAM_BOT_TOKEN` with your actual token before running.
+ 
