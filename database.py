@@ -17,7 +17,7 @@ async def init_db():
             """
         )
         # Insert default vacancies if they are not present
-        for i in range(1, 6):
+        for i in range(1, 5):
             cursor = await db.execute("SELECT 1 FROM vacancies WHERE id = ?", (i,))
             row = await cursor.fetchone()
             if not row:

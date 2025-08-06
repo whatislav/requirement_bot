@@ -136,15 +136,6 @@ async def on_resume_received(message: types.Message, state: FSMContext):
     await state.clear()
 
 
-# New handler for voice resumes
-@dp.message(Form.waiting_resume, F.voice)
-async def on_voice_resume_received(message: types.Message, state: FSMContext):
-    await message.answer(
-        "Ответ работодателя: Спасибо большое! Вы отличная команда! Ваш голосовой отклик получен!"
-    )
-    await state.clear()
-
-
 @dp.message(Command("setvoice"))
 async def cmd_set_voice(message: types.Message, state: FSMContext):
     """Admin command to start voice replacement workflow: /setvoice <vacancy_id>"""
