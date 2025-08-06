@@ -73,7 +73,7 @@ async def cmd_start(message: types.Message):
     """Show the main menu with available vacancies."""
     keyboard = await build_vacancies_keyboard()
     await message.answer(
-        "Вы сотрудник кадрового агентства, выбирете вакансию", reply_markup=keyboard
+        "Вы сотрудник кадрового агентства, выберите вакансию", reply_markup=keyboard
     )
 
 
