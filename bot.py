@@ -23,6 +23,8 @@ if TOKEN == "YOUR_TELEGRAM_BOT_TOKEN":
 
 # Ensure voices directory exists (makes it easier for users to notice missing files)
 Path("voices").mkdir(exist_ok=True)
+# Directory to store uploaded voice resumes
+Path("uploads").mkdir(exist_ok=True)
 
 # ---------------------------------------------------------------------------
 # FSM States
@@ -31,6 +33,10 @@ Path("voices").mkdir(exist_ok=True)
 
 class Form(StatesGroup):
     waiting_resume = State()
+
+
+class VoiceUpdate(StatesGroup):
+    waiting_voice = State()
 
 
 # ---------------------------------------------------------------------------
@@ -102,12 +108,15 @@ async def on_vacancy_selected(callback: types.CallbackQuery, state: FSMContext):
     )
 
     # 3. Voice message corresponding to the vacancy number
-    voice_path = info[2]
-    if os.path.exists(voice_path):
-        await callback.message.answer_voice(types.FSInputFile(voice_path))
-    else:
+    voice_ref = info[2]
+    try:
+        if os.path.exists(voice_ref):
+            await callback.message.answer_voice(types.FSInputFile(voice_ref))
+        else:
+            await callback.message.answer_voice(voice_ref)
+    except Exception:
         await callback.message.answer(
-            f"(Отсутствует голосовое сообщение для {info[1]} — файл {voice_path} не найден)"
+            f"(Не удалось отправить голосовое сообщение для {info[1]})"
         )
 
     # 4. Prompt to upload CV
@@ -124,6 +133,53 @@ async def on_resume_received(message: types.Message, state: FSMContext):
     await message.answer(
         "Ответ работодателя: Спасибо большое! Вы отличная команда! Ваш кандидат принят на работу!"
     )
+    await state.clear()
+
+
+# New handler for voice resumes
+@dp.message(Form.waiting_resume, F.voice)
+async def on_voice_resume_received(message: types.Message, state: FSMContext):
+    await message.answer(
+        "Ответ работодателя: Спасибо большое! Вы отличная команда! Ваш голосовой отклик получен!"
+    )
+    await state.clear()
+
+
+@dp.message(Command("setvoice"))
+async def cmd_set_voice(message: types.Message, state: FSMContext):
+    """Admin command to start voice replacement workflow: /setvoice <vacancy_id>"""
+    if message.from_user.id not in ADMIN_IDS:
+        await message.answer("У вас нет прав для этой команды.")
+        return
+
+    # Expect argument like /setvoice 3
+    parts = message.text.strip().split()
+    if len(parts) != 2 or not parts[1].isdigit():
+        await message.answer("Использование: /setvoice <ID вакансии>")
+        return
+
+    vac_id = int(parts[1])
+    if vac_id not in range(1, 6):
+        await message.answer("ID вакансии должен быть от 1 до 5")
+        return
+
+    await state.set_state(VoiceUpdate.waiting_voice)
+    await state.update_data(vacancy_id=vac_id)
+    await message.answer(f"Отправьте новое голосовое сообщение для вакансии {vac_id}")
+
+
+@dp.message(VoiceUpdate.waiting_voice, F.voice)
+async def on_new_voice(message: types.Message, state: FSMContext):
+    if message.from_user.id not in ADMIN_IDS:
+        await message.answer("У вас нет прав для этой команды.")
+        return
+
+    data = await state.get_data()
+    vac_id = data.get("vacancy_id")
+    file_id = message.voice.file_id
+
+    await db.update_voice_path(vac_id, file_id)
+    await message.answer(f"Голосовое сообщение для вакансии {vac_id} обновлено ✅")
     await state.clear()
 
 

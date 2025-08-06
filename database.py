@@ -67,6 +67,13 @@ async def get_voice_path(vac_id: int):
         return row[0] if row else None
 
 
+async def update_voice_path(vac_id: int, new_ref: str):
+    """Update the stored voice reference (file path or Telegram file_id)."""
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("UPDATE vacancies SET voice_path = ? WHERE id = ?", (new_ref, vac_id))
+        await db.commit()
+
+
 async def reset_vacancies():
     """Reset all vacancies to available (taken = 0)."""
     async with aiosqlite.connect(DB_PATH) as db:
