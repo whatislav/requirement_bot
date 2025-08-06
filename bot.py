@@ -168,7 +168,7 @@ async def cmd_set_voice(message: types.Message, state: FSMContext):
     await message.answer(f"Отправьте новое голосовое сообщение для вакансии {vac_id}")
 
 
-@dp.message(VoiceUpdate.waiting_voice, F.voice)
+@dp.message(VoiceUpdate.waiting_voice, F.voice | F.document)
 async def on_new_voice(message: types.Message, state: FSMContext):
     if message.from_user.id not in ADMIN_IDS:
         await message.answer("У вас нет прав для этой команды.")
@@ -176,10 +176,32 @@ async def on_new_voice(message: types.Message, state: FSMContext):
 
     data = await state.get_data()
     vac_id = data.get("vacancy_id")
-    file_id = message.voice.file_id
 
-    await db.update_voice_path(vac_id, file_id)
-    await message.answer(f"Голосовое сообщение для вакансии {vac_id} обновлено ✅")
+    # Case 1: admin sent a native voice message
+    if message.voice:
+        file_id = message.voice.file_id
+        await db.update_voice_path(vac_id, file_id)
+        await message.answer(f"Голосовое сообщение для вакансии {vac_id} обновлено ✅")
+        await state.clear()
+        return
+
+    # Case 2: admin sent an .ogg file as document
+    doc = message.document
+    if not doc or not (doc.file_name or "").lower().endswith(".ogg"):
+        await message.answer("Пожалуйста, отправьте голосовое сообщение или .ogg файл.")
+        return
+
+    # Download the document locally
+    file_info = await message.bot.get_file(doc.file_id)
+    local_path = Path("uploads") / f"vac{vac_id}_{doc.file_unique_id}.ogg"
+    await message.bot.download_file(file_info.file_path, destination=local_path)
+
+    # Save into voices directory with standard naming
+    voices_dst = Path("voices") / f"voice{vac_id}.ogg"
+    local_path.replace(voices_dst)
+
+    await db.update_voice_path(vac_id, str(voices_dst))
+    await message.answer(f"Файл .ogg получен и установлен для вакансии {vac_id} ✅")
     await state.clear()
 
 
