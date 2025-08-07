@@ -44,9 +44,6 @@ async def take_vacancy(vac_id: int):
     async with aiosqlite.connect(DB_PATH) as db:
         cursor = await db.execute("SELECT taken FROM vacancies WHERE id = ?", (vac_id,))
         row = await cursor.fetchone()
-        if row is None or row[0] == 1:
-            # Vacancy does not exist or already taken
-            return None
 
         await db.execute("UPDATE vacancies SET taken = 1 WHERE id = ?", (vac_id,))
         cursor = await db.execute(
