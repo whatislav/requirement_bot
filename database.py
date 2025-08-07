@@ -35,7 +35,7 @@ async def init_db():
 async def get_available():
     """Return a list of (id, title) tuples for vacancies that are still available."""
     async with aiosqlite.connect(DB_PATH) as db:
-        cursor = await db.execute("SELECT id, title FROM vacancies WHERE taken = 0")
+        cursor = await db.execute("SELECT id, title FROM vacancies")
         return await cursor.fetchall()
 
 
